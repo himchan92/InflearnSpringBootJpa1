@@ -3,9 +3,12 @@ package jpabook.jpashop.api;
 import jakarta.validation.Valid;
 import jpabook.jpashop.domain.Member;
 import jpabook.jpashop.service.MemberService;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -15,6 +18,20 @@ import org.springframework.web.bind.annotation.RestController;
 public class MemberApiController {
 
     private final MemberService memberService;
+
+    @Data
+    static class CreateMemberRequest {
+        private String name;
+    }
+
+    @Data
+    static class CreateMemberResponse {
+        private Long id;
+
+        public CreateMemberResponse(Long id) {
+            this.id = id;
+        }
+    }
 
     // @Valid : @NotEmpty 붙은 필드 대상으로 수행
     // API 파라미터는 엔티티를 절대 셋팅하여 노출시키면 안된다
@@ -38,16 +55,23 @@ public class MemberApiController {
     }
 
     @Data
-    static class CreateMemberRequest {
+    static class UpdateMemberRequest {
         private String name;
     }
 
     @Data
-    static class CreateMemberResponse {
+    @AllArgsConstructor //모든필드 생성자
+    static class UpdateMemberResponse {
         private Long id;
+        private String name;
+    }
 
-        public CreateMemberResponse(Long id) {
-            this.id = id;
-        }
+    //수정 API
+    @PutMapping("/api/v2/members/{id}")
+    public UpdateMemberResponse updateMemberV2(@PathVariable("id") Long id,
+                                               @RequestBody @Valid UpdateMemberRequest request) {
+        memberService.update(id, request.getName());
+        Member findMember = memberService.findOne(id); //변경 작업 후 id 기준 조회
+        return new UpdateMemberResponse(findMember.getId(), findMember.getName());
     }
 }
